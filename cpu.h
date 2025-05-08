@@ -71,6 +71,8 @@ uint8_t TSX();	uint8_t TXA();	uint8_t TXS();	uint8_t TYA();
 // Illegal Opcodes
 uint8_t XXX(); // Captures all illegal opcodes
 
+void clock();
+
 typedef struct {
     const char *name;
     uint8_t (*operation)(Cpu *);

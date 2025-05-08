@@ -33,7 +33,7 @@ Cpu *initialize_cpu()
     return cpu;
 }
 
-extern const Instruction lookup_matrix[OPCODE_COUNT] = {
+const Instruction opcode_matrix[OPCODE_COUNT] = {
     {"BRK", BRK, IMP, 7}, {"ORA", ORA, INX, 6}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"XXX", NOP, IMP, 3}, {"ORA", ORA, ZP0, 3}, {"ASL", ASL, ZP0, 5}, {"XXX", XXX, IMP, 5}, {"PHP", PHP, IMP, 3}, {"ORA", ORA, IMM, 2}, {"ASL", ASL, IMP, 2}, {"XXX", XXX, IMP, 2}, {"XXX", NOP, IMP, 4}, {"ORA", ORA, ABS, 4}, {"ASL", ASL, ABS, 6}, {"XXX", XXX, IMP, 6},
     {"BPL", BPL, REL, 2}, {"ORA", ORA, INY, 5}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"XXX", NOP, IMP, 4}, {"ORA", ORA, ZPX, 4}, {"ASL", ASL, ZPX, 6}, {"XXX", XXX, IMP, 6}, {"CLC", CLC, IMP, 2}, {"ORA", ORA, ABY, 4}, {"XXX", NOP, IMP, 2}, {"XXX", XXX, IMP, 7}, {"XXX", NOP, IMP, 4}, {"ORA", ORA, ABX, 4}, {"ASL", ASL, ABX, 7}, {"XXX", XXX, IMP, 7},
     {"JSR", JSR, ABS, 6}, {"AND", AND, INX, 6}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"BIT", BIT, ZP0, 3}, {"AND", AND, ZP0, 3}, {"ROL", ROL, ZP0, 5}, {"XXX", XXX, IMP, 5}, {"PLP", PLP, IMP, 4}, {"AND", AND, IMM, 2}, {"ROL", ROL, IMP, 2}, {"XXX", XXX, IMP, 2}, {"BIT", BIT, ABS, 4}, {"AND", AND, ABS, 4}, {"ROL", ROL, ABS, 6}, {"XXX", XXX, IMP, 6},
@@ -51,3 +51,20 @@ extern const Instruction lookup_matrix[OPCODE_COUNT] = {
     {"CPX", CPX, IMM, 2}, {"SBC", SBC, INX, 6}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"CPX", CPX, ZP0, 3}, {"SBC", SBC, ZP0, 3}, {"INC", INC, ZP0, 5}, {"XXX", XXX, IMP, 5}, {"INX", INX, IMP, 2}, {"SBC", SBC, IMM, 2}, {"NOP", NOP, IMP, 2}, {"XXX", NOP, IMP, 2}, {"CPX", CPX, ABS, 4}, {"SBC", SBC, ABS, 4}, {"INC", INC, ABS, 6}, {"XXX", XXX, IMP, 6},
     {"BEQ", BEQ, REL, 2}, {"SBC", SBC, INY, 5}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"XXX", NOP, IMP, 4}, {"SBC", SBC, ZPX, 4}, {"INC", INC, ZPX, 6}, {"XXX", XXX, IMP, 6}, {"SED", SED, IMP, 2}, {"SBC", SBC, ABY, 4}, {"XXX", NOP, IMP, 2}, {"XXX", XXX, IMP, 7}, {"XXX", NOP, IMP, 4}, {"SBC", SBC, ABX, 4}, {"INC", INC, ABX, 7}, {"XXX", XXX, IMP, 7}
 };
+
+void clock(Cpu *cpu, Bus *bus)
+{
+    if (cpu->cycles == 0)
+    {
+        cpu->opcode = cpu->read(bus->ram, cpu->pc);
+        cpu->pc++;
+    
+        cpu->cycles = opcode_matrix[cpu->opcode].cycles;
+    
+        uint8_t address_additional_cycle = opcode_matrix[cpu->opcode].address_mode(cpu);
+        uint8_t operation_additional_cycle = opcode_matrix[cpu->opcode].operation(cpu);
+
+        cpu->cycles += (address_additional_cycle & operation_additional_cycle);
+    }
+    cpu->cycles--;
+}
