@@ -17,9 +17,9 @@ Cpu *initialize_cpu()
     cpu->write = write;
     cpu->read = read;
 
-    cpu->a = 0x00;
-    cpu->x = 0x00;
-    cpu->y = 0x00;
+    cpu->accumulator = 0x00;
+    cpu->x_register = 0x00;
+    cpu->y_register = 0x00;
     cpu->stack_pointer = 0x00;
     cpu->pc = 0x0000; // 16-bit
     cpu->status = 0x00;
@@ -61,10 +61,199 @@ void clock(Cpu *cpu, Bus *bus)
     
         cpu->cycles = opcode_matrix[cpu->opcode].cycles;
     
-        uint8_t address_additional_cycle = opcode_matrix[cpu->opcode].address_mode(cpu);
+        uint8_t address_additional_cycle = opcode_matrix[cpu->opcode].address_mode(cpu, bus);
         uint8_t operation_additional_cycle = opcode_matrix[cpu->opcode].operation(cpu);
 
         cpu->cycles += (address_additional_cycle & operation_additional_cycle);
     }
     cpu->cycles--;
+}
+
+uint8_t get_flag(Cpu *cpu, Flags flag)
+{
+    return ((cpu->status & flag) > 0) ? 1 : 0;
+}
+
+void set_flag(Cpu *cpu, Flags flag, bool value)
+{
+    if (value)
+        cpu->status |= flag;
+    else
+        cpu->status &= ~flag;
+}
+
+// Addressing modes
+
+// Implied
+// No data in the instruction
+// Some instruction need accumulator 
+uint8_t IMP(Cpu *cpu, Bus *bus) // Bus is NULL
+{
+    (void)bus;
+    cpu->fetched_data = cpu->accumulator;
+    return 0;
+}
+
+// Immediate
+// Data is supplied by the instruction
+// Data gets put in the address absolute, 
+// this way the instruction knows where to read the data when it needs to
+uint8_t IMM(Cpu *cpu, Bus *bus) // Bus is NULL
+{
+    (void)bus;
+    cpu->address_abs = cpu->pc++;
+    return 0;
+}
+
+// Zero Page Addressing
+// Byte of data the instruction needs is in the zero page of memory
+uint8_t ZP0(Cpu *cpu, Bus *bus)
+{
+    cpu->address_abs = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+    cpu->address_abs &= 0x00FF; // reading only the low byte of zero page address
+    return 0;
+}
+
+// Zero Page Adressing with X register offset
+uint8_t ZPX(Cpu *cpu, Bus *bus)
+{
+    cpu->address_abs = (cpu->read(bus->ram, cpu->pc) + cpu->x_register);
+    cpu->pc++;
+    cpu->address_abs &= 0x00FF;
+    return 0;
+}
+
+// Zero Page Adressing with Y register offset
+uint8_t ZPY(Cpu *cpu, Bus *bus)
+{
+    cpu->address_abs = (cpu->read(bus->ram, cpu->pc) + cpu->y_register);
+    cpu->pc++;
+    cpu->address_abs &= 0x00FF;
+    return 0;
+}
+
+// Absolute mode addressing
+// Needed when specifying the full address range
+// Has to check the high byte for page address (unlike ZP mode),
+// and low byte for page offset
+// 6502 is little-endian
+// Read the low byte first then the high byte
+uint8_t ABS(Cpu *cpu, Bus *bus)
+{
+    uint16_t low_byte = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+    uint16_t high_byte = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+
+    cpu->address_abs = (high_byte << 8) | low_byte;
+
+    return 0;
+}
+
+// Absolute mode addressing with X register offset
+uint8_t ABX(Cpu *cpu, Bus *bus)
+{
+    uint16_t low_byte = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+    uint16_t high_byte = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+
+    cpu->address_abs = (high_byte << 8) | low_byte;
+    cpu->address_abs += cpu->x_register;
+
+    // Checking if page boundary has been crossed after adding x
+    if ((cpu->address_abs & 0xFF00) != (high_byte << 8))
+        return 1; // Overflow, page changed
+    else
+        return 0;
+}
+
+// Absolute mode addressing with Y register offset
+uint8_t ABY(Cpu *cpu, Bus *bus)
+{
+    uint16_t low_byte = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+    uint16_t high_byte = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+
+    cpu->address_abs = (high_byte << 8) | low_byte;
+    cpu->address_abs += cpu->x_register;
+
+    // Checking if page boundary has been crossed after adding y
+    if ((cpu->address_abs & 0xFF00) != (high_byte << 8))
+        return 1; // Overflow, page changed
+    else
+        return 0;
+}
+
+// Indirect addressing
+// 6502's way of pointer implementation
+// Interrogate provided address to get the address in which data resides
+uint8_t IND(Cpu *cpu, Bus *bus)
+{
+    uint16_t low_byte_pointer = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+    uint16_t high_byte_pointer = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;   
+
+    uint16_t pointer_address = (high_byte_pointer << 8) | low_byte_pointer;
+
+    if (low_byte_pointer == 0x00FF) // Simulate page boundary hardware bug
+    {
+        cpu->address_abs = (cpu->read(bus->ram, pointer_address & 0xFF00) << 8) | cpu->read(bus->ram, pointer_address + 0);
+    }
+    else // Normal behavior
+    {
+        cpu->address_abs = (cpu->read(bus->ram, pointer_address + 1) << 8) | cpu->read(bus->ram, pointer_address + 0);
+    }
+
+    return 0;
+}
+
+// Indirect zero page addressing with X register offset
+uint8_t IZX(Cpu *cpu, Bus *bus)
+{
+    uint16_t supplied_address = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+
+    uint16_t low_byte = cpu->read(bus->ram, (uint16_t)(supplied_address + (uint16_t)cpu->x_register) & 0x00FF);
+    uint16_t high_byte = cpu->read(bus->ram, (uint16_t)(supplied_address + (uint16_t)cpu->x_register + 1) & 0x00FF);
+
+    cpu->address_abs = (high_byte << 8) | low_byte;
+
+    return 0;
+}
+
+// Indirect zero page addressing with Y register offset
+uint8_t IZY(Cpu *cpu, Bus *bus)
+{
+    uint16_t supplied_address = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+
+    uint16_t low_byte = cpu->read(bus->ram, supplied_address & 0x00FF);
+    uint16_t high_byte = cpu->read(bus->ram, (supplied_address + 1) & 0x00FF);
+
+    cpu->address_abs = (high_byte << 8) | low_byte;
+    cpu->address_abs += cpu->y_register;
+
+        // Checking if page boundary has been crossed after adding y
+        if ((cpu->address_abs & 0xFF00) != (high_byte << 8))
+        return 1; // Overflow, page changed
+    else
+        return 0;
+}
+
+// Relative addressing mode
+uint8_t REL(Cpu *cpu, Bus *bus)
+{
+    cpu->address_rel = cpu->read(bus->ram, cpu->pc);
+    cpu->pc++;
+
+    if (cpu->address_rel & 0x80) // CHecking if the address is a signed data type
+    {
+        cpu->address_rel |= 0xFF00; 
+    }
+
+    return 0;
 }

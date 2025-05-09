@@ -17,7 +17,7 @@ typedef enum {
 
 typedef struct {
 
-    uint8_t a, x, y;            // Acumulator, X and Y registers
+    uint8_t accumulator, x_register, y_register;            // Acumulator, X and Y registers
     uint8_t stack_pointer;      // Points to a location on bus
     uint16_t pc;                // Program counter
     uint8_t status;             // Status Register
@@ -34,23 +34,23 @@ typedef struct {
 
 void write(uint8_t ram[], uint16_t address, uint8_t data);
 uint8_t read(uint8_t ram[], uint16_t address);
-uint8_t get_flag(Flags flag);
-void set_flag(Flags flag, bool value);
-void clock();
-void reset();
-void irq(); // Interupt Request Signal; Can be ignored depending on enable interupt flag
-void nmi(); // Non-maskable Interupt Signal; Cannot be disabled
-uint8_t fetch_data();
+uint8_t get_flag(Cpu *cpu, Flags flag);
+void set_flag(Cpu *cpu, Flags flag, bool value);
+void clock(Cpu *cpu,Bus *bus);
+void reset(Cpu *cpu);
+void irq(Cpu *cpu); // Interupt Request Signal; Can be ignored depending on 'enable interupt' flag
+void nmi(Cpu *cpu); // Non-maskable Interupt Signal; Cannot be disabled
+uint8_t fetch_data(Cpu *cpu);
 
 Cpu *initialize_cpu();
 
 // Adressing modes
-uint8_t IMP();	uint8_t IMM();	
-uint8_t ZP0();	uint8_t ZPX();	
-uint8_t ZPY();	uint8_t REL();
-uint8_t ABS();	uint8_t ABX();	
-uint8_t ABY();	uint8_t IND();	
-uint8_t IZX();	uint8_t IZY();
+uint8_t IMP(Cpu *cpu, Bus *bus);	uint8_t IMM(Cpu *cpu, Bus *bus); // IMP and IMM don't require bus
+uint8_t ZP0(Cpu *cpu, Bus *bus);	uint8_t ZPX(Cpu *cpu, Bus *bus);
+uint8_t ZPY(Cpu *cpu, Bus *bus);	uint8_t REL(Cpu *cpu, Bus *bus);
+uint8_t ABS(Cpu *cpu, Bus *bus);	uint8_t ABX(Cpu *cpu, Bus *bus);
+uint8_t ABY(Cpu *cpu, Bus *bus);	uint8_t IND(Cpu *cpu, Bus *bus);
+uint8_t IZX(Cpu *cpu, Bus *bus);	uint8_t IZY(Cpu *cpu, Bus *bus);
 
 // Legal Opcodes
 uint8_t ADC();	uint8_t AND();	uint8_t ASL();	uint8_t BCC();
@@ -71,12 +71,10 @@ uint8_t TSX();	uint8_t TXA();	uint8_t TXS();	uint8_t TYA();
 // Illegal Opcodes
 uint8_t XXX(); // Captures all illegal opcodes
 
-void clock();
-
 typedef struct {
     const char *name;
     uint8_t (*operation)(Cpu *);
-    uint8_t (*address_mode)(Cpu *);
+    uint8_t (*address_mode)(Cpu *, Bus *);
     uint8_t cycles;
 } Instruction;
 
