@@ -5,7 +5,6 @@
 #include <stdint.h> // renames standard types into explicit types
 #include <stdbool.h>
 #include <stdlib.h>
-#include "cpu.h"
 
 typedef struct {
     uint8_t ram[RAM_SIZE];
