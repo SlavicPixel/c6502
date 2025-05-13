@@ -1,5 +1,5 @@
-#include "bus.h"
 #include <string.h>
+#include "bus.h"
 
 void clear_ram(uint8_t ram[])
 {
