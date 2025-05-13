@@ -7,8 +7,8 @@ c6502: main.o bus.o cpu.o
 main.o: main.c bus.h
 	$(CC) -c main.c $(CFLAGS)
 
-bus.o: bus.c bus.h cpu.h
-	$(CC) -c bus.c $(CFLAGS)
-
-cpu.o: cpu.c cpu.h
+cpu.o: cpu.c cpu.h bus.h
 	$(CC) -c cpu.c $(CFLAGS)
+
+bus.o: bus.c bus.h
+	$(CC) -c bus.c $(CFLAGS)
