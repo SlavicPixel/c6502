@@ -1,6 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
 #define OPCODE_COUNT 256
+#define UNUSED(x) (void)(x)
 
 #include "bus.h"
 
@@ -36,11 +37,11 @@ void write(uint8_t ram[], uint16_t address, uint8_t data);
 uint8_t read(uint8_t ram[], uint16_t address);
 uint8_t get_flag(Cpu *cpu, Flags flag);
 void set_flag(Cpu *cpu, Flags flag, bool value);
-void clock(Cpu *cpu,Bus *bus);
-void reset(Cpu *cpu);
-void irq(Cpu *cpu); // Interupt Request Signal; Can be ignored depending on 'enable interupt' flag
-void nmi(Cpu *cpu); // Non-maskable Interupt Signal; Cannot be disabled
-uint8_t fetch_data(Cpu *cpu);
+void clock(Cpu *cpu, Bus *bus);
+void reset(Cpu *cpu, Bus *bus);
+void irq(Cpu *cpu, Bus *bus); // Interupt Request Signal; Can be ignored depending on 'enable interupt' flag
+void nmi(Cpu *cpu, Bus *bus); // Non-maskable Interupt Signal; Cannot be disabled
+uint8_t fetch_data(Cpu *cpu, Bus *bus);
 
 Cpu *initialize_cpu();
 
@@ -53,27 +54,27 @@ uint8_t ABY(Cpu *cpu, Bus *bus);	uint8_t IND(Cpu *cpu, Bus *bus);
 uint8_t IZX(Cpu *cpu, Bus *bus);	uint8_t IZY(Cpu *cpu, Bus *bus);
 
 // Legal Opcodes
-uint8_t ADC();	uint8_t AND();	uint8_t ASL();	uint8_t BCC();
-uint8_t BCS();	uint8_t BEQ();	uint8_t BIT();	uint8_t BMI();
-uint8_t BNE();	uint8_t BPL();	uint8_t BRK();	uint8_t BVC();
-uint8_t BVS();	uint8_t CLC();	uint8_t CLD();	uint8_t CLI();
-uint8_t CLV();	uint8_t CMP();	uint8_t CPX();	uint8_t CPY();
-uint8_t DEC();	uint8_t DEX();	uint8_t DEY();	uint8_t EOR();
-uint8_t INC();	uint8_t INX();	uint8_t INY();	uint8_t JMP();
-uint8_t JSR();	uint8_t LDA();	uint8_t LDX();	uint8_t LDY();
-uint8_t LSR();	uint8_t NOP();	uint8_t ORA();	uint8_t PHA();
-uint8_t PHP();	uint8_t PLA();	uint8_t PLP();	uint8_t ROL();
-uint8_t ROR();	uint8_t RTI();	uint8_t RTS();	uint8_t SBC();
-uint8_t SEC();	uint8_t SED();	uint8_t SEI();	uint8_t STA();
-uint8_t STX();	uint8_t STY();	uint8_t TAX();	uint8_t TAY();
-uint8_t TSX();	uint8_t TXA();	uint8_t TXS();	uint8_t TYA();
+uint8_t ADC(Cpu *cpu, Bus *bus);	uint8_t AND(Cpu *cpu, Bus *bus);	uint8_t ASL(Cpu *cpu, Bus *bus);	uint8_t BCC(Cpu *cpu, Bus *bus);
+uint8_t BCS(Cpu *cpu, Bus *bus);	uint8_t BEQ(Cpu *cpu, Bus *bus);	uint8_t BIT(Cpu *cpu, Bus *bus);	uint8_t BMI(Cpu *cpu, Bus *bus);
+uint8_t BNE(Cpu *cpu, Bus *bus);	uint8_t BPL(Cpu *cpu, Bus *bus);	uint8_t BRK(Cpu *cpu, Bus *bus);	uint8_t BVC(Cpu *cpu, Bus *bus);
+uint8_t BVS(Cpu *cpu, Bus *bus);	uint8_t CLC(Cpu *cpu, Bus *bus);	uint8_t CLD(Cpu *cpu, Bus *bus);	uint8_t CLI(Cpu *cpu, Bus *bus);
+uint8_t CLV(Cpu *cpu, Bus *bus);	uint8_t CMP(Cpu *cpu, Bus *bus);	uint8_t CPX(Cpu *cpu, Bus *bus);	uint8_t CPY(Cpu *cpu, Bus *bus);
+uint8_t DEC(Cpu *cpu, Bus *bus);	uint8_t DEX(Cpu *cpu, Bus *bus);	uint8_t DEY(Cpu *cpu, Bus *bus);	uint8_t EOR(Cpu *cpu, Bus *bus);
+uint8_t INC(Cpu *cpu, Bus *bus);	uint8_t INX(Cpu *cpu, Bus *bus);	uint8_t INY(Cpu *cpu, Bus *bus);	uint8_t JMP(Cpu *cpu, Bus *bus);
+uint8_t JSR(Cpu *cpu, Bus *bus);	uint8_t LDA(Cpu *cpu, Bus *bus);	uint8_t LDX(Cpu *cpu, Bus *bus);	uint8_t LDY(Cpu *cpu, Bus *bus);
+uint8_t LSR(Cpu *cpu, Bus *bus);	uint8_t NOP(Cpu *cpu, Bus *bus);	uint8_t ORA(Cpu *cpu, Bus *bus);	uint8_t PHA(Cpu *cpu, Bus *bus);
+uint8_t PHP(Cpu *cpu, Bus *bus);	uint8_t PLA(Cpu *cpu, Bus *bus);	uint8_t PLP(Cpu *cpu, Bus *bus);	uint8_t ROL(Cpu *cpu, Bus *bus);
+uint8_t ROR(Cpu *cpu, Bus *bus);	uint8_t RTI(Cpu *cpu, Bus *bus);	uint8_t RTS(Cpu *cpu, Bus *bus);	uint8_t SBC(Cpu *cpu, Bus *bus);
+uint8_t SEC(Cpu *cpu, Bus *bus);	uint8_t SED(Cpu *cpu, Bus *bus);	uint8_t SEI(Cpu *cpu, Bus *bus);	uint8_t STA(Cpu *cpu, Bus *bus);
+uint8_t STX(Cpu *cpu, Bus *bus);	uint8_t STY(Cpu *cpu, Bus *bus);	uint8_t TAX(Cpu *cpu, Bus *bus);	uint8_t TAY(Cpu *cpu, Bus *bus);
+uint8_t TSX(Cpu *cpu, Bus *bus);	uint8_t TXA(Cpu *cpu, Bus *bus);	uint8_t TXS(Cpu *cpu, Bus *bus);	uint8_t TYA(Cpu *cpu, Bus *bus);
 
 // Illegal Opcodes
 uint8_t XXX(); // Captures all illegal opcodes
 
 typedef struct {
     const char *name;
-    uint8_t (*operation)(Cpu *);
+    uint8_t (*operation)(Cpu *, Bus *);
     uint8_t (*address_mode)(Cpu *, Bus *);
     uint8_t cycles;
 } Instruction;
