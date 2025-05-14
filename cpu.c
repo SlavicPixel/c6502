@@ -46,7 +46,7 @@ const Instruction opcode_lookup[OPCODE_COUNT] = {
     {"BCC", BCC, REL, 2}, {"STA", STA, INY, 6}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 6}, {"STY", STY, ZPX, 4}, {"STA", STA, ZPX, 4}, {"STX", STX, ZPY, 4}, {"XXX", XXX, IMP, 4}, {"TYA", TYA, IMP, 2}, {"STA", STA, ABY, 5}, {"TXS", TXS, IMP, 2}, {"XXX", XXX, IMP, 5}, {"XXX", XXX, IMP, 5}, {"STA", STA, ABX, 5}, {"XXX", XXX, IMP, 5}, {"XXX", XXX, IMP, 5},
     {"LDY", LDY, IMM, 2}, {"LDA", LDA, INX, 6}, {"LDX", LDX, IMM, 2}, {"XXX", XXX, IMP, 6}, {"LDY", LDY, ZP0, 3}, {"LDA", LDA, ZP0, 3}, {"LDX", LDX, ZP0, 3}, {"XXX", XXX, IMP, 3}, {"TAY", TAY, IMP, 2}, {"LDA", LDA, IMM, 2}, {"TAX", TAX, IMP, 2}, {"XXX", XXX, IMP, 2}, {"LDY", LDY, ABS, 4}, {"LDA", LDA, ABS, 4}, {"LDX", LDX, ABS, 4}, {"XXX", XXX, IMP, 4},
     {"BCS", BCS, REL, 2}, {"LDA", LDA, INY, 5}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 5}, {"LDY", LDY, ZPX, 4}, {"LDA", LDA, ZPX, 4}, {"LDX", LDX, ZPY, 4}, {"XXX", XXX, IMP, 4}, {"CLV", CLV, IMP, 2}, {"LDA", LDA, ABY, 4}, {"TSX", TSX, IMP, 2}, {"XXX", XXX, IMP, 4}, {"LDY", LDY, ABX, 4}, {"LDA", LDA, ABX, 4}, {"LDX", LDX, ABY, 4}, {"XXX", XXX, IMP, 4},
-    {"CPY", CPY, IMM, 2}, {"CMP", CMP, INX, 6}, {"XXX", NOP, IMP, 2}, {"XXX", XXX, IMP, 8}, {"CPY", CPY, ZP0, 3}, {"CMP", CMP, ZP0, 3}, {"DEC", DEC, ZP0, 5}, {"XXX", XXX, IMP, 5}, {"INY", INY, IMP, 2}, {"CMP", CMP, IMP, 2}, {"DEX", DEX, IMP, 2}, {"XXX", XXX, IMP, 2}, {"CPY", CPY, ABS, 4}, {"CMP", CMP, ABS, 4}, {"DEC", DEC, ABS, 6}, {"XXX", XXX, IMP, 6},
+    {"CPY", CPY, IMM, 2}, {"CMP", CMP, INX, 6}, {"XXX", NOP, IMP, 2}, {"XXX", XXX, IMP, 8}, {"CPY", CPY, ZP0, 3}, {"CMP", CMP, ZP0, 3}, {"DEC", DEC, ZP0, 5}, {"XXX", XXX, IMP, 5}, {"INY", INY, IMP, 2}, {"CMP", CMP, IMM, 2}, {"DEX", DEX, IMP, 2}, {"XXX", XXX, IMP, 2}, {"CPY", CPY, ABS, 4}, {"CMP", CMP, ABS, 4}, {"DEC", DEC, ABS, 6}, {"XXX", XXX, IMP, 6},
     {"BNE", BNE, REL, 2}, {"CMP", CMP, INY, 5}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"XXX", NOP, IMP, 4}, {"CMP", CMP, ZPX, 4}, {"DEC", DEC, ZPX, 6}, {"XXX", XXX, IMP, 6}, {"CLD", CLD, IMP, 2}, {"CMP", CMP, ABY, 4}, {"XXX", NOP, IMP, 2}, {"XXX", XXX, IMP, 7}, {"XXX", NOP, IMP, 4}, {"CMP", CMP, ABX, 4}, {"DEC", DEC, ABX, 7}, {"XXX", XXX, IMP, 7},
     {"CPX", CPX, IMM, 2}, {"SBC", SBC, INX, 6}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"CPX", CPX, ZP0, 3}, {"SBC", SBC, ZP0, 3}, {"INC", INC, ZP0, 5}, {"XXX", XXX, IMP, 5}, {"INX", INX, IMP, 2}, {"SBC", SBC, IMM, 2}, {"NOP", NOP, IMP, 2}, {"XXX", NOP, IMP, 2}, {"CPX", CPX, ABS, 4}, {"SBC", SBC, ABS, 4}, {"INC", INC, ABS, 6}, {"XXX", XXX, IMP, 6},
     {"BEQ", BEQ, REL, 2}, {"SBC", SBC, INY, 5}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"XXX", NOP, IMP, 4}, {"SBC", SBC, ZPX, 4}, {"INC", INC, ZPX, 6}, {"XXX", XXX, IMP, 6}, {"SED", SED, IMP, 2}, {"SBC", SBC, ABY, 4}, {"XXX", NOP, IMP, 2}, {"XXX", XXX, IMP, 7}, {"XXX", NOP, IMP, 4}, {"SBC", SBC, ABX, 4}, {"INC", INC, ABX, 7}, {"XXX", XXX, IMP, 7}
@@ -151,7 +151,7 @@ void nmi(Cpu *cpu, Bus *bus)
 
 uint8_t fetch_data(Cpu *cpu, Bus *bus)
 {
-    if (!(opcode_lookup[cpu->opcode].address_mode == IMP)) // There is no data to fetch in Implied addressing mode
+    if (!(opcode_lookup[cpu->opcode].address_mode == &IMP)) // There is no data to fetch in Implied addressing mode
         cpu->fetched_data = cpu->read(bus->ram, cpu->address_abs);
     return cpu->fetched_data;
 }
