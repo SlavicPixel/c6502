@@ -4,6 +4,7 @@
 #define UNUSED(x) (void)(x)
 
 #include "bus.h"
+#include "disassembler_ht.h"
 
 typedef enum {
     C = (1 << 0),  // Carry Bit
@@ -78,5 +79,7 @@ typedef struct {
     uint8_t (*address_mode)(Cpu *, Bus *);
     uint8_t cycles;
 } Instruction;
+
+Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address);
 
 #endif

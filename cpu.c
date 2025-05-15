@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "cpu.h"
 
 void write(uint8_t ram[], uint16_t address, uint8_t data)
@@ -1040,4 +1041,142 @@ uint8_t XXX(Cpu *cpu, Bus *bus)
     UNUSED(cpu);
     UNUSED(bus);
     return 0;
+}
+
+// Disassembler
+
+// Helper function to convert a hexidecimal integer value into a string
+void to_string_hex(uint32_t number, uint8_t digits_length, char *converted)
+{
+    // Grab the lowest 4 bits, convert it into hex char then shift number right 4 bits
+    for (int i = digits_length - 1; i >= 0; i--, number >>= 4)
+        converted[i] = "0123456789ABCDEF"[number & 0xF]; // Picks the hex digit corresponding to the lowest nibble (4 bits) of n
+    converted[digits_length] = '\0';
+}
+
+Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
+{
+    uint32_t address = start_address;
+    uint8_t value = 0x00, low_byte = 0x00, high_byte = 0x00;
+    Line *mapLines = NULL;
+    uint16_t line_address = 0;
+    
+    char instruction[32], address_string[5];
+
+    while (address <= (uint32_t)end_address)
+    {
+        line_address = address;
+
+        to_string_hex(address, 4, address_string);
+        snprintf(instruction, sizeof(instruction), "$%s: ", address_string);
+
+        uint8_t opcode = bus_read(bus->ram, address, true);
+        address++;
+        snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "%s ", opcode_lookup[opcode].name);
+        
+        if (opcode_lookup[opcode].address_mode == &IMP)
+        {
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), " {IMP}");
+        }
+        else if (opcode_lookup[opcode].address_mode == &IMM)
+        {
+            value = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = 0x00;
+            to_string_hex(value, 2, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "#$%s {IMM}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &ZP0)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = 0x00;
+            to_string_hex(low_byte, 2, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "#$%s {ZP0}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &ZPX)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = 0x00;
+            to_string_hex(low_byte, 2, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "#$%s, X {ZPX}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &ZPY)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = 0x00;
+            to_string_hex(low_byte, 2, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "#$%s, X {ZPY}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &IZX)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = 0x00;
+            to_string_hex(low_byte, 2, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "($%s, X {IZX}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &IZY)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = 0x00;
+            to_string_hex(low_byte, 2, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "($%s, X {IZY}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &ABS)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = bus_read(bus->ram, address, true);
+            address++;
+            to_string_hex((uint16_t)(high_byte << 8) | low_byte, 4, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s {ABS}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &ABX)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = bus_read(bus->ram, address, true);
+            address++;
+            to_string_hex((uint16_t)(high_byte << 8) | low_byte, 4, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s, X {ABX}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &ABY)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = bus_read(bus->ram, address, true);
+            address++;
+            to_string_hex((uint16_t)(high_byte << 8) | low_byte, 4, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s, X {ABX}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &IND)
+        {
+            low_byte = bus_read(bus->ram, address, true);
+            address++;
+            high_byte = bus_read(bus->ram, address, true);
+            address++;
+            to_string_hex((uint16_t)(high_byte << 8) | low_byte, 4, address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "($%s) {IND}", address_string);
+        }
+        else if (opcode_lookup[opcode].address_mode == &REL)
+        {
+            value = bus_read(bus->ram, address, true);
+            address++;
+            to_string_hex(value, 4, address_string);
+            char address_string2[5];
+            to_string_hex(value, 4, address_string2);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s [$%s] {REL}", address_string, address_string2);
+        }
+
+        Line *entry = malloc(sizeof(Line));
+        entry->address = line_address;
+        strncpy(entry->line, instruction, sizeof(entry->line) - 1);
+        entry->line[sizeof(entry->line) - 1] = '\0';
+        HASH_ADD_INT(mapLines, address, entry);
+    }
+    return mapLines;
 }
