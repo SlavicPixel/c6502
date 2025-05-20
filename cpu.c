@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include "cpu.h"
 
-void write(uint8_t ram[], uint16_t address, uint8_t data)
+void cpu_write(uint8_t ram[], uint16_t address, uint8_t data)
 {
     bus_write(ram, address, data);
 }
 
-uint8_t read(uint8_t ram[], uint16_t address)
+uint8_t cpu_read(uint8_t ram[], uint16_t address)
 {
     return bus_read(ram, address, 0);
 }
@@ -15,8 +15,8 @@ Cpu *initialize_cpu()
 {
     Cpu *cpu = malloc(sizeof(Cpu));
 
-    cpu->write = write;
-    cpu->read = read;
+    cpu->cpu_write = cpu_write;
+    cpu->cpu_read = cpu_read;
 
     cpu->accumulator = 0x00;
     cpu->x_register = 0x00;
@@ -53,11 +53,11 @@ const Instruction opcode_lookup[OPCODE_COUNT] = {
     {"BEQ", BEQ, REL, 2}, {"SBC", SBC, INY, 5}, {"XXX", XXX, IMP, 2}, {"XXX", XXX, IMP, 8}, {"XXX", NOP, IMP, 4}, {"SBC", SBC, ZPX, 4}, {"INC", INC, ZPX, 6}, {"XXX", XXX, IMP, 6}, {"SED", SED, IMP, 2}, {"SBC", SBC, ABY, 4}, {"XXX", NOP, IMP, 2}, {"XXX", XXX, IMP, 7}, {"XXX", NOP, IMP, 4}, {"SBC", SBC, ABX, 4}, {"INC", INC, ABX, 7}, {"XXX", XXX, IMP, 7}
 };
 
-void clock(Cpu *cpu, Bus *bus)
+void cpu_clock(Cpu *cpu, Bus *bus)
 {
     if (cpu->cycles == 0)
     {
-        cpu->opcode = cpu->read(bus->ram, cpu->pc);
+        cpu->opcode = cpu->cpu_read(bus->ram, cpu->pc);
         cpu->pc++;
     
         cpu->cycles = opcode_lookup[cpu->opcode].cycles;
@@ -92,68 +92,68 @@ void reset(Cpu *cpu, Bus *bus)
     cpu->status = 0x00 | U;
 
     cpu->address_abs = 0xFFFC; // Provided by the program, 0xFFFC stores an address of the first address needed by the program counter
-    uint16_t low_byte = cpu->read(bus->ram, cpu->address_abs + 0);
-    uint16_t high_byte = cpu->read(bus->ram, cpu->address_abs + 1);
+    uint16_t low_byte = cpu->cpu_read(bus->ram, cpu->address_abs + 0);
+    uint16_t high_byte = cpu->cpu_read(bus->ram, cpu->address_abs + 1);
     cpu->pc = (high_byte << 8) | low_byte;
 
     cpu->fetched_data = 0x00;
     cpu->address_abs = 0x0000;
     cpu->address_rel = 0x0000;
 
-    cpu->cycles = 8; // Reset takes 8 clock cycles
+    cpu->cycles = 8; // Reset takes 8 cpu_clock cycles
 }
 
 void irq(Cpu *cpu, Bus *bus)
 {
     if (get_flag(cpu, I) == 0) // Checking Disable Interrupt flag
     {
-        cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, (cpu->pc >> 8) & 0x00FF);
+        cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, (cpu->pc >> 8) & 0x00FF);
         cpu->stack_pointer--;
-        cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->pc & 0x00FF);
+        cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->pc & 0x00FF);
         cpu->stack_pointer--;
 
         set_flag(cpu, B, 0);
         set_flag(cpu, U, 1);
         set_flag(cpu, I, 1);
         
-        cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->status);
+        cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->status);
         cpu->stack_pointer--;
 
         cpu->address_abs = 0xFFFE; // Provided by the program, 0xFFFE stores a value for the new program counter
-        uint16_t low_byte = cpu->read(bus->ram, cpu->address_abs + 0);
-        uint16_t high_byte = cpu->read(bus->ram, cpu->address_abs + 1);
+        uint16_t low_byte = cpu->cpu_read(bus->ram, cpu->address_abs + 0);
+        uint16_t high_byte = cpu->cpu_read(bus->ram, cpu->address_abs + 1);
         cpu->pc = (high_byte << 8) | low_byte;
 
-        cpu->cycles = 7; // Interrupt takes 7 clock cycles
+        cpu->cycles = 7; // Interrupt takes 7 cpu_clock cycles
     }
 }
 
 void nmi(Cpu *cpu, Bus *bus)
 {
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, (cpu->pc >> 8) & 0x00FF);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, (cpu->pc >> 8) & 0x00FF);
     cpu->stack_pointer--;
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->pc & 0x00FF);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->pc & 0x00FF);
     cpu->stack_pointer--;
 
     set_flag(cpu, B, 0);
     set_flag(cpu, U, 1);
     set_flag(cpu, I, 1);
     
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->status);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->status);
     cpu->stack_pointer--;
 
     cpu->address_abs = 0xFFFE; // Provided by the program, 0xFFFE stores a value for the new program counter
-    uint16_t low_byte = cpu->read(bus->ram, cpu->address_abs + 0);
-    uint16_t high_byte = cpu->read(bus->ram, cpu->address_abs + 1);
+    uint16_t low_byte = cpu->cpu_read(bus->ram, cpu->address_abs + 0);
+    uint16_t high_byte = cpu->cpu_read(bus->ram, cpu->address_abs + 1);
     cpu->pc = (high_byte << 8) | low_byte;
 
-    cpu->cycles = 8; // Non-maskable interrupt takes 8 clock cycles
+    cpu->cycles = 8; // Non-maskable interrupt takes 8 cpu_clock cycles
 }
 
 uint8_t fetch_data(Cpu *cpu, Bus *bus)
 {
     if (!(opcode_lookup[cpu->opcode].address_mode == &IMP)) // There is no data to fetch in Implied addressing mode
-        cpu->fetched_data = cpu->read(bus->ram, cpu->address_abs);
+        cpu->fetched_data = cpu->cpu_read(bus->ram, cpu->address_abs);
     return cpu->fetched_data;
 }
 
@@ -173,7 +173,7 @@ uint8_t IMP(Cpu *cpu, Bus *bus)
 // Immediate
 // Data is supplied by the instruction
 // Data gets put in the address absolute, 
-// this way the instruction knows where to read the data when it needs to
+// this way the instruction knows where to cpu_read the data when it needs to
 uint8_t IMM(Cpu *cpu, Bus *bus)
 {
     UNUSED(bus);
@@ -185,7 +185,7 @@ uint8_t IMM(Cpu *cpu, Bus *bus)
 // Byte of data the instruction needs is in the zero page of memory
 uint8_t ZP0(Cpu *cpu, Bus *bus)
 {
-    cpu->address_abs = cpu->read(bus->ram, cpu->pc);
+    cpu->address_abs = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
     cpu->address_abs &= 0x00FF; // reading only the low byte of zero page address
     return 0;
@@ -194,7 +194,7 @@ uint8_t ZP0(Cpu *cpu, Bus *bus)
 // Zero Page Adressing with X register offset
 uint8_t ZPX(Cpu *cpu, Bus *bus)
 {
-    cpu->address_abs = (cpu->read(bus->ram, cpu->pc) + cpu->x_register);
+    cpu->address_abs = (cpu->cpu_read(bus->ram, cpu->pc) + cpu->x_register);
     cpu->pc++;
     cpu->address_abs &= 0x00FF;
     return 0;
@@ -203,7 +203,7 @@ uint8_t ZPX(Cpu *cpu, Bus *bus)
 // Zero Page Adressing with Y register offset
 uint8_t ZPY(Cpu *cpu, Bus *bus)
 {
-    cpu->address_abs = (cpu->read(bus->ram, cpu->pc) + cpu->y_register);
+    cpu->address_abs = (cpu->cpu_read(bus->ram, cpu->pc) + cpu->y_register);
     cpu->pc++;
     cpu->address_abs &= 0x00FF;
     return 0;
@@ -217,9 +217,9 @@ uint8_t ZPY(Cpu *cpu, Bus *bus)
 // Read the low byte first then the high byte
 uint8_t ABS(Cpu *cpu, Bus *bus)
 {
-    uint16_t low_byte = cpu->read(bus->ram, cpu->pc);
+    uint16_t low_byte = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
-    uint16_t high_byte = cpu->read(bus->ram, cpu->pc);
+    uint16_t high_byte = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
 
     cpu->address_abs = (high_byte << 8) | low_byte;
@@ -230,9 +230,9 @@ uint8_t ABS(Cpu *cpu, Bus *bus)
 // Absolute mode addressing with X register offset
 uint8_t ABX(Cpu *cpu, Bus *bus)
 {
-    uint16_t low_byte = cpu->read(bus->ram, cpu->pc);
+    uint16_t low_byte = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
-    uint16_t high_byte = cpu->read(bus->ram, cpu->pc);
+    uint16_t high_byte = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
 
     cpu->address_abs = (high_byte << 8) | low_byte;
@@ -248,9 +248,9 @@ uint8_t ABX(Cpu *cpu, Bus *bus)
 // Absolute mode addressing with Y register offset
 uint8_t ABY(Cpu *cpu, Bus *bus)
 {
-    uint16_t low_byte = cpu->read(bus->ram, cpu->pc);
+    uint16_t low_byte = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
-    uint16_t high_byte = cpu->read(bus->ram, cpu->pc);
+    uint16_t high_byte = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
 
     cpu->address_abs = (high_byte << 8) | low_byte;
@@ -268,20 +268,20 @@ uint8_t ABY(Cpu *cpu, Bus *bus)
 // Interrogate provided address to get the address in which data resides
 uint8_t IND(Cpu *cpu, Bus *bus)
 {
-    uint16_t low_byte_pointer = cpu->read(bus->ram, cpu->pc);
+    uint16_t low_byte_pointer = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
-    uint16_t high_byte_pointer = cpu->read(bus->ram, cpu->pc);
+    uint16_t high_byte_pointer = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;   
 
     uint16_t pointer_address = (high_byte_pointer << 8) | low_byte_pointer;
 
     if (low_byte_pointer == 0x00FF) // Simulate page boundary hardware bug
     {
-        cpu->address_abs = (cpu->read(bus->ram, pointer_address & 0xFF00) << 8) | cpu->read(bus->ram, pointer_address + 0);
+        cpu->address_abs = (cpu->cpu_read(bus->ram, pointer_address & 0xFF00) << 8) | cpu->cpu_read(bus->ram, pointer_address + 0);
     }
     else // Normal behavior
     {
-        cpu->address_abs = (cpu->read(bus->ram, pointer_address + 1) << 8) | cpu->read(bus->ram, pointer_address + 0);
+        cpu->address_abs = (cpu->cpu_read(bus->ram, pointer_address + 1) << 8) | cpu->cpu_read(bus->ram, pointer_address + 0);
     }
 
     return 0;
@@ -290,11 +290,11 @@ uint8_t IND(Cpu *cpu, Bus *bus)
 // Indirect zero page addressing with X register offset
 uint8_t IZX(Cpu *cpu, Bus *bus)
 {
-    uint16_t supplied_address = cpu->read(bus->ram, cpu->pc);
+    uint16_t supplied_address = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
 
-    uint16_t low_byte = cpu->read(bus->ram, (uint16_t)(supplied_address + (uint16_t)cpu->x_register) & 0x00FF);
-    uint16_t high_byte = cpu->read(bus->ram, (uint16_t)(supplied_address + (uint16_t)cpu->x_register + 1) & 0x00FF);
+    uint16_t low_byte = cpu->cpu_read(bus->ram, (uint16_t)(supplied_address + (uint16_t)cpu->x_register) & 0x00FF);
+    uint16_t high_byte = cpu->cpu_read(bus->ram, (uint16_t)(supplied_address + (uint16_t)cpu->x_register + 1) & 0x00FF);
 
     cpu->address_abs = (high_byte << 8) | low_byte;
 
@@ -304,11 +304,11 @@ uint8_t IZX(Cpu *cpu, Bus *bus)
 // Indirect zero page addressing with Y register offset
 uint8_t IZY(Cpu *cpu, Bus *bus)
 {
-    uint16_t supplied_address = cpu->read(bus->ram, cpu->pc);
+    uint16_t supplied_address = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
 
-    uint16_t low_byte = cpu->read(bus->ram, supplied_address & 0x00FF);
-    uint16_t high_byte = cpu->read(bus->ram, (supplied_address + 1) & 0x00FF);
+    uint16_t low_byte = cpu->cpu_read(bus->ram, supplied_address & 0x00FF);
+    uint16_t high_byte = cpu->cpu_read(bus->ram, (supplied_address + 1) & 0x00FF);
 
     cpu->address_abs = (high_byte << 8) | low_byte;
     cpu->address_abs += cpu->y_register;
@@ -323,7 +323,7 @@ uint8_t IZY(Cpu *cpu, Bus *bus)
 // Relative addressing mode
 uint8_t REL(Cpu *cpu, Bus *bus)
 {
-    cpu->address_rel = cpu->read(bus->ram, cpu->pc);
+    cpu->address_rel = cpu->cpu_read(bus->ram, cpu->pc);
     cpu->pc++;
 
     if (cpu->address_rel & 0x80) // CHecking if the address is a signed data type
@@ -376,7 +376,7 @@ uint8_t ASL(Cpu *cpu, Bus *bus)
     if (opcode_lookup[cpu->opcode].address_mode == &IMP)
         cpu->accumulator = temp & 0x00FF;
     else
-        cpu->write(bus->ram, cpu->address_abs, temp & 0x00FF);
+        cpu->cpu_write(bus->ram, cpu->address_abs, temp & 0x00FF);
     
     return 0;
 }
@@ -500,17 +500,17 @@ uint8_t BRK(Cpu *cpu, Bus *bus)
     cpu->pc++;
 
     set_flag(cpu, I, 1);
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, (cpu->pc >> 8) & 0x00FF);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, (cpu->pc >> 8) & 0x00FF);
     cpu->stack_pointer--;
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->pc & 0x00FF);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->pc & 0x00FF);
     cpu->stack_pointer--;
 
     set_flag(cpu, B, 1);
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->status);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->status);
     cpu->stack_pointer--;
     set_flag(cpu, B, 0);
 
-    cpu->pc = (uint16_t)cpu->read(bus->ram, 0xFFFE) | ((uint16_t)cpu->read(bus->ram, 0xFFFF) << 8);
+    cpu->pc = (uint16_t)cpu->cpu_read(bus->ram, 0xFFFE) | ((uint16_t)cpu->cpu_read(bus->ram, 0xFFFF) << 8);
 
     return 0;
 }
@@ -622,7 +622,7 @@ uint8_t DEC(Cpu *cpu, Bus *bus)
 
     uint16_t temp = cpu->fetched_data - 1;
 
-    cpu->write(bus->ram, cpu->address_abs, temp & 0x00FF);
+    cpu->cpu_write(bus->ram, cpu->address_abs, temp & 0x00FF);
 
     set_flag(cpu, Z, (temp & 0x00FF) == 0x0000);
     set_flag(cpu, N, temp & 0x0080);
@@ -676,7 +676,7 @@ uint8_t INC(Cpu *cpu, Bus *bus)
 
     uint16_t temp = cpu->fetched_data + 1;
 
-    cpu->write(bus->ram, cpu->address_abs, temp & 0x00FF);
+    cpu->cpu_write(bus->ram, cpu->address_abs, temp & 0x00FF);
 
     set_flag(cpu, Z, (temp & 0x00FF) == 0x0000);
     set_flag(cpu, N, temp & 0x0080);
@@ -717,9 +717,9 @@ uint8_t JSR(Cpu *cpu, Bus *bus)
 {
     cpu->pc--;
 
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, (cpu->pc >> 8) & 0x00FF);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, (cpu->pc >> 8) & 0x00FF);
     cpu->stack_pointer--;
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->pc & 0x00FF);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->pc & 0x00FF);
     cpu->stack_pointer--;
 
     cpu->pc = cpu->address_abs;
@@ -777,7 +777,7 @@ uint8_t LSR(Cpu *cpu, Bus *bus)
     if (opcode_lookup[cpu->opcode].address_mode == &IMP)
         cpu->accumulator = temp & 0x00FF;
     else
-        cpu->write(bus->ram, cpu->address_abs, temp & 0x00FF);
+        cpu->cpu_write(bus->ram, cpu->address_abs, temp & 0x00FF);
    
     return 0;
 }
@@ -812,7 +812,7 @@ uint8_t ORA(Cpu *cpu, Bus *bus)
 
 uint8_t PHA(Cpu *cpu, Bus *bus)
 {
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->accumulator); // Pushes a copy of accumulator on the stack
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->accumulator); // Pushes a copy of accumulator on the stack
     cpu->stack_pointer--;
     return 0;
 }
@@ -820,7 +820,7 @@ uint8_t PHA(Cpu *cpu, Bus *bus)
 uint8_t PHP(Cpu *cpu, Bus *bus)
 {
     uint8_t temp = cpu->status | B | U;
-    cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, temp);
+    cpu->cpu_write(bus->ram, 0x0100 + cpu->stack_pointer, temp);
     
     set_flag(cpu, B, 0);
     set_flag(cpu, U, 0);
@@ -833,7 +833,7 @@ uint8_t PHP(Cpu *cpu, Bus *bus)
 uint8_t PLA(Cpu *cpu, Bus *bus)
 {
     cpu->stack_pointer++;
-    cpu->accumulator = cpu->read(bus->ram, 0x0100 + cpu->stack_pointer);
+    cpu->accumulator = cpu->cpu_read(bus->ram, 0x0100 + cpu->stack_pointer);
     
     set_flag(cpu, Z, cpu->accumulator == 0x00);
     set_flag(cpu, N, cpu->accumulator & 0x80);
@@ -844,7 +844,7 @@ uint8_t PLA(Cpu *cpu, Bus *bus)
 uint8_t PLP(Cpu *cpu, Bus *bus)
 {
     cpu->stack_pointer++;
-    cpu->status = cpu->read(bus->ram, 0x0100 + cpu->stack_pointer);
+    cpu->status = cpu->cpu_read(bus->ram, 0x0100 + cpu->stack_pointer);
     set_flag(cpu, U, 1);
     return 0;
 }
@@ -863,7 +863,7 @@ uint8_t ROL(Cpu *cpu, Bus *bus)
     if (opcode_lookup[cpu->opcode].address_mode == IMP)
         cpu->accumulator = temp;
     else
-        cpu->write(bus->ram, cpu->address_abs, temp);
+        cpu->cpu_write(bus->ram, cpu->address_abs, temp);
 
     return 0;
 
@@ -883,7 +883,7 @@ uint8_t ROR(Cpu *cpu, Bus *bus)
     if (opcode_lookup[cpu->opcode].address_mode == IMP)
         cpu->accumulator = temp;
     else
-        cpu->write(bus->ram, cpu->address_abs, temp);
+        cpu->cpu_write(bus->ram, cpu->address_abs, temp);
 
     return 0;
 
@@ -892,14 +892,14 @@ uint8_t ROR(Cpu *cpu, Bus *bus)
 uint8_t RTI(Cpu *cpu, Bus *bus)
 {
     cpu->stack_pointer++;
-    cpu->status = cpu->read(bus->ram, 0x0100 + cpu->stack_pointer);
+    cpu->status = cpu->cpu_read(bus->ram, 0x0100 + cpu->stack_pointer);
     cpu->status &= ~B;
     cpu->status &= ~U;
 
     cpu->stack_pointer++;
-    cpu->stack_pointer = (uint16_t)cpu->read(bus->ram, 0x0100 + cpu->stack_pointer);
+    cpu->stack_pointer = (uint16_t)cpu->cpu_read(bus->ram, 0x0100 + cpu->stack_pointer);
     cpu->stack_pointer++;
-    cpu->stack_pointer |= (uint16_t)cpu->read(bus->ram, 0x0100 + cpu->stack_pointer) << 8;
+    cpu->stack_pointer |= (uint16_t)cpu->cpu_read(bus->ram, 0x0100 + cpu->stack_pointer) << 8;
 
     return 0;
 }
@@ -907,10 +907,10 @@ uint8_t RTI(Cpu *cpu, Bus *bus)
 uint8_t RTS(Cpu *cpu, Bus *bus)
 {
     cpu->stack_pointer++;
-    cpu->pc = (uint16_t)cpu->read(bus->ram, 0x0100 + cpu->stack_pointer);
+    cpu->pc = (uint16_t)cpu->cpu_read(bus->ram, 0x0100 + cpu->stack_pointer);
 
     cpu->stack_pointer++;
-    cpu->pc |= (uint16_t)cpu->read(bus->ram, 0x0100 + cpu->stack_pointer) << 8;
+    cpu->pc |= (uint16_t)cpu->cpu_read(bus->ram, 0x0100 + cpu->stack_pointer) << 8;
 
     cpu->pc++;
 
@@ -958,19 +958,19 @@ uint8_t SEI(Cpu *cpu, Bus *bus)
 
 uint8_t STA(Cpu *cpu, Bus *bus)
 {
-    cpu->write(bus->ram, cpu->address_abs, cpu->accumulator);
+    cpu->cpu_write(bus->ram, cpu->address_abs, cpu->accumulator);
     return 0;
 }
 
 uint8_t STX(Cpu *cpu, Bus *bus)
 {
-    cpu->write(bus->ram, cpu->address_abs, cpu->x_register);
+    cpu->cpu_write(bus->ram, cpu->address_abs, cpu->x_register);
     return 0;
 }
 
 uint8_t STY(Cpu *cpu, Bus *bus)
 {
-    cpu->write(bus->ram, cpu->address_abs, cpu->y_register);
+    cpu->cpu_write(bus->ram, cpu->address_abs, cpu->y_register);
     return 0;
 }
 

@@ -30,15 +30,15 @@ typedef struct {
     uint8_t opcode;
     uint8_t cycles;       // Number of cycles needed to finish an instruction
 
-    void (*write)(uint8_t [], uint16_t, uint8_t);
-    uint8_t (*read)(uint8_t [], uint16_t);
+    void (*cpu_write)(uint8_t [], uint16_t, uint8_t);
+    uint8_t (*cpu_read)(uint8_t [], uint16_t);
 } Cpu;
 
-void write(uint8_t ram[], uint16_t address, uint8_t data);
-uint8_t read(uint8_t ram[], uint16_t address);
+void cpu_write(uint8_t ram[], uint16_t address, uint8_t data);
+uint8_t cpu_read(uint8_t ram[], uint16_t address);
 uint8_t get_flag(Cpu *cpu, Flags flag);
 void set_flag(Cpu *cpu, Flags flag, bool value);
-void clock(Cpu *cpu, Bus *bus);
+void cpu_clock(Cpu *cpu, Bus *bus);
 void reset(Cpu *cpu, Bus *bus);
 void irq(Cpu *cpu, Bus *bus); // Interupt Request Signal; Can be ignored depending on 'enable interupt' flag
 void nmi(Cpu *cpu, Bus *bus); // Non-maskable Interupt Signal; Cannot be disabled
