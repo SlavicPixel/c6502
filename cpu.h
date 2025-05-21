@@ -30,8 +30,8 @@ typedef struct {
     uint8_t opcode;
     uint8_t cycles;       // Number of cycles needed to finish an instruction
 
-    void (*cpu_write)(uint8_t [], uint16_t, uint8_t);
-    uint8_t (*cpu_read)(uint8_t [], uint16_t);
+    void (*write)(uint8_t [], uint16_t, uint8_t);
+    uint8_t (*read)(uint8_t [], uint16_t);
 } Cpu;
 
 void cpu_write(uint8_t ram[], uint16_t address, uint8_t data);
