@@ -923,7 +923,7 @@ uint8_t SBC(Cpu *cpu, Bus *bus)
 
     uint16_t temp1 = ((uint16_t)cpu->fetched_data) ^ 0x00FF;
 
-    uint16_t temp2 = (uint16_t)cpu->accumulator + (uint16_t)cpu->fetched_data + (uint16_t)get_flag(cpu, C);
+    uint16_t temp2 = (uint16_t)cpu->accumulator + temp1 + (uint16_t)get_flag(cpu, C);
 
     set_flag(cpu, C, temp2 & 0xFF00);
     set_flag(cpu, Z, (temp2 & 0x00FF) == 0);
