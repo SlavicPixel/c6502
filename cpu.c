@@ -1092,7 +1092,7 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
             address++;
             high_byte = 0x00;
             to_string_hex(low_byte, 2, address_string);
-            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "#$%s {ZP0}", address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s {ZP0}", address_string);
         }
         else if (opcode_lookup[opcode].address_mode == &ZPX)
         {
@@ -1100,7 +1100,7 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
             address++;
             high_byte = 0x00;
             to_string_hex(low_byte, 2, address_string);
-            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "#$%s, X {ZPX}", address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s, X {ZPX}", address_string);
         }
         else if (opcode_lookup[opcode].address_mode == &ZPY)
         {
@@ -1108,7 +1108,7 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
             address++;
             high_byte = 0x00;
             to_string_hex(low_byte, 2, address_string);
-            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "#$%s, X {ZPY}", address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s, Y {ZPY}", address_string);
         }
         else if (opcode_lookup[opcode].address_mode == &IZX)
         {
@@ -1116,7 +1116,7 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
             address++;
             high_byte = 0x00;
             to_string_hex(low_byte, 2, address_string);
-            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "($%s, X {IZX}", address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "($%s, X) {IZX}", address_string);
         }
         else if (opcode_lookup[opcode].address_mode == &IZY)
         {
@@ -1124,7 +1124,7 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
             address++;
             high_byte = 0x00;
             to_string_hex(low_byte, 2, address_string);
-            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "($%s, X {IZY}", address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "($%s), Y {IZY}", address_string);
         }
         else if (opcode_lookup[opcode].address_mode == &ABS)
         {
@@ -1151,7 +1151,7 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
             high_byte = bus_read(bus->ram, address, true);
             address++;
             to_string_hex((uint16_t)(high_byte << 8) | low_byte, 4, address_string);
-            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s, X {ABX}", address_string);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s, Y {ABY}", address_string);
         }
         else if (opcode_lookup[opcode].address_mode == &IND)
         {
@@ -1164,12 +1164,15 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
         }
         else if (opcode_lookup[opcode].address_mode == &REL)
         {
-            value = bus_read(bus->ram, address, true);
+            uint8_t branch_offset = bus_read(bus->ram, address, true);
             address++;
-            to_string_hex(value, 4, address_string);
-            char address_string2[5];
-            to_string_hex(value, 4, address_string2);
-            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s [$%s] {REL}", address_string, address_string2);
+            char offset_hex[5];
+            to_string_hex(branch_offset, 2, offset_hex);
+            int8_t signed_offset = (int8_t)branch_offset;
+            uint16_t branch_target = address + signed_offset;
+            char target_hex[5];
+            to_string_hex(branch_target, 4, target_hex);
+            snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "$%s [$%s] {REL}", offset_hex, target_hex);
         }
 
         Line *entry = malloc(sizeof(Line));
