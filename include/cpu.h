@@ -71,7 +71,7 @@ uint8_t STX(Cpu *cpu, Bus *bus);	uint8_t STY(Cpu *cpu, Bus *bus);	uint8_t TAX(Cp
 uint8_t TSX(Cpu *cpu, Bus *bus);	uint8_t TXA(Cpu *cpu, Bus *bus);	uint8_t TXS(Cpu *cpu, Bus *bus);	uint8_t TYA(Cpu *cpu, Bus *bus);
 
 // Illegal Opcodes
-uint8_t XXX(); // Captures all illegal opcodes
+uint8_t XXX(Cpu *cpu, Bus *bus); // Captures all illegal opcodes
 
 typedef struct {
     const char *name;
