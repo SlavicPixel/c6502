@@ -1082,7 +1082,6 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
         {
             value = bus_read(bus->ram, address, true);
             address++;
-            high_byte = 0x00;
             to_string_hex(value, 2, address_string);
             snprintf(instruction + strlen(instruction), sizeof(instruction) - strlen(instruction), "#$%s {IMM}", address_string);
         }
