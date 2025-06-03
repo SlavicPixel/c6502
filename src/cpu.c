@@ -11,7 +11,7 @@ uint8_t cpu_read(uint8_t ram[], uint16_t address)
     return bus_read(ram, address, 0);
 }
 
-Cpu *initialize_cpu()
+Cpu *initialize_cpu(void)
 {
     Cpu *cpu = malloc(sizeof(Cpu));
 
