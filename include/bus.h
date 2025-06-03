@@ -8,8 +8,6 @@
 
 typedef struct {
     uint8_t ram[RAM_SIZE];
-
-    void (*bus_write)(uint8_t, uint16_t, uint8_t);
 } Bus;
 
 void clear_ram(uint8_t ram[]);
