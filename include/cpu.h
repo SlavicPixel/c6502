@@ -44,7 +44,7 @@ void irq(Cpu *cpu, Bus *bus); // Interupt Request Signal; Can be ignored dependi
 void nmi(Cpu *cpu, Bus *bus); // Non-maskable Interupt Signal; Cannot be disabled
 uint8_t fetch_data(Cpu *cpu, Bus *bus);
 
-Cpu *initialize_cpu();
+Cpu *initialize_cpu(void);
 
 // Adressing modes
 uint8_t IMP(Cpu *cpu, Bus *bus);	uint8_t IMM(Cpu *cpu, Bus *bus); // IMP and IMM don't require bus
