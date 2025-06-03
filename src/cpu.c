@@ -142,7 +142,7 @@ void nmi(Cpu *cpu, Bus *bus)
     cpu->write(bus->ram, 0x0100 + cpu->stack_pointer, cpu->status);
     cpu->stack_pointer--;
 
-    cpu->address_abs = 0xFFFE; // Provided by the program, 0xFFFE stores a value for the new program counter
+    cpu->address_abs = 0xFFFA; // Provided by the program, 0xFFFA stores a value for the new program counter
     uint16_t low_byte = cpu->read(bus->ram, cpu->address_abs + 0);
     uint16_t high_byte = cpu->read(bus->ram, cpu->address_abs + 1);
     cpu->pc = (high_byte << 8) | low_byte;
