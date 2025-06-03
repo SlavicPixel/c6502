@@ -13,6 +13,12 @@ void print_cpu(Cpu *cpu)
 
 int main(int argc, char const *argv[])
 {
+    if (argc == 1)
+    {
+        printf("Error: binary file not found\n\nUsage: c6502 [FILE] [OPTIONS]\n");
+        return 1;
+    }
+
     const char *binary = argv[1];
     size_t len = strlen(binary);
 
