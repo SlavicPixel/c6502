@@ -16,7 +16,7 @@ int main(int argc, char const *argv[])
     const char *binary = argv[1];
     size_t len = strlen(binary);
 
-    if (len >= 3 && strcmp(&binary[len - 4], ".bin") != 0) 
+    if (len < 4 || strcmp(&binary[len - 4], ".bin") != 0) 
     {
         printf("Error: invalid file\n");
         return 1;
