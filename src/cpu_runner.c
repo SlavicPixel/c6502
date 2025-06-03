@@ -6,7 +6,7 @@ void load_test_program(Cpu *cpu, Bus *bus, const char *filename)
 {
     FILE *file = fopen(filename, "rb");
     if (!file) {
-        printf("Error: Could not open binary: %s\n", filename);
+        printf("Error: file %s not found\n", filename);
         exit(1);
     }
 
