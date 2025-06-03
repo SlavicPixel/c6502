@@ -254,7 +254,7 @@ uint8_t ABY(Cpu *cpu, Bus *bus)
     cpu->pc++;
 
     cpu->address_abs = (high_byte << 8) | low_byte;
-    cpu->address_abs += cpu->x_register;
+    cpu->address_abs += cpu->y_register;
 
     // Checking if page boundary has been crossed after adding y
     if ((cpu->address_abs & 0xFF00) != (high_byte << 8))
