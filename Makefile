@@ -1,6 +1,17 @@
-CC = gcc
+UNAME_S := $(shell uname -s)
+
+# Compiler selection
+ifeq ($(UNAME_S),Linux)
+    CC = gcc
+    LDFLAGS = -lraylib -lm -ldl -lpthread -lGL
+endif
+
+ifeq ($(UNAME_S),Darwin)
+    CC = clang
+    LDFLAGS = -lraylib -lm -ldl -framework OpenGL
+endif
+
 CFLAGS = -Wall -Wextra -Wpedantic -std=c99 -Iinclude -Ilib
-LDFLAGS = -lraylib -lm -ldl -lpthread -lGL
 
 c6502: main.o bus.o cpu.o debugger_gui.o cpu_runner.o
 	$(CC) -o c6502 main.o bus.o cpu.o debugger_gui.o cpu_runner.o $(CFLAGS) $(LDFLAGS)
