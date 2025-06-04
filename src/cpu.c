@@ -1178,7 +1178,7 @@ Line *disassembler(Bus *bus, uint16_t start_address, uint16_t end_address)
         entry->address = line_address;
         strncpy(entry->line, instruction, sizeof(entry->line) - 1);
         entry->line[sizeof(entry->line) - 1] = '\0';
-        HASH_ADD_INT(mapLines, address, entry);
+        HASH_ADD(hh, mapLines, address, sizeof(uint16_t), entry);
     }
     return mapLines;
 }
