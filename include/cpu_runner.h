@@ -5,6 +5,7 @@
 
 void load_test_program(Cpu *cpu, Bus *bus, const char *filename);
 void run(Cpu *cpu, Bus *bus, int instruction_count);
-void print_disassembled(Line *disassembled);
+Line *find_first_entry(Line *disassembled, uint16_t start_address);
+void print_disassembled(Line *disassembled, uint16_t start_address);
 
 #endif
