@@ -13,7 +13,7 @@ void step_instruction(Cpu *cpu, Bus *bus)
         cpu->pc, cpu->opcode, cpu->accumulator, cpu->x_register, cpu->y_register, cpu->status);
 }
 
-void gui_debugger(Cpu *cpu, Bus *bus,uint16_t start_address)
+void gui_debugger(Cpu *cpu, Bus *bus, uint16_t start_address, Line *first_entry)
 {
     InitWindow(1200, 800, "6502 Debugger");
     SetTargetFPS(60);
@@ -110,14 +110,15 @@ void gui_debugger(Cpu *cpu, Bus *bus,uint16_t start_address)
         snprintf(sp_text, sizeof(sp_text), "Stack Pointer: $%04X", cpu->stack_pointer);
         DrawTextEx(font, sp_text, (Vector2){90 + 17 * 40 , 10 + 5 * 20}, 15, 0, WHITE);
 
-        Line *disassembled = disassembler(bus, 0x0400, 0x0423);
-        Line *entry, *tmp;
+        Line *entry = first_entry;
 
-        int i = 7;
-        HASH_ITER(hh, disassembled, entry, tmp){
+        int i = 7, j = 0;
+        while (entry->hh.next && j <= 26)
+        {
             DrawTextEx(font, entry->line, (Vector2){90 + 17 * 40 , 10 + i++ * 20}, 15, 0, entry->address == cpu->pc ? (Color){ 0, 200, 241, 255 } : WHITE);
+            entry = entry->hh.next;
+            j++;
         }
-
 
         DrawTextEx(font, "SPACE = Step Instruction   R = RESET   I = IRQ    N = NMI", (Vector2){25, 360 + 18 * 20}, 15, 0, WHITE);
         
