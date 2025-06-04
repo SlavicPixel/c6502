@@ -4,6 +4,6 @@
 #include "cpu.h"
 
 void step_instruction(Cpu *cpu, Bus *bus);
-void gui_debugger(Cpu *cpu, Bus *bus,uint16_t start_address);
+void gui_debugger(Cpu *cpu, Bus *bus,uint16_t start_address, Line *first_entry);
 
 #endif
