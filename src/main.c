@@ -33,14 +33,14 @@ int main(int argc, char const *argv[])
 
     load_test_program(cpu, bus, binary);
     reset(cpu, bus);
-    cpu->pc = 0x0400;
+    //cpu->pc = 0x8000;
 
-    Line *disassembled = disassembler(bus, 0x0400, 0x0423);
+    Line *disassembled = disassembler(bus, 0x0000, 0xFFFF);
 
     if (argc > 2 && strcmp(argv[2], "--gui") == 0) {
-        gui_debugger(cpu, bus, cpu->pc);
+        gui_debugger(cpu, bus, cpu->pc, find_first_entry(disassembled, cpu->pc));
     } else {
-        print_disassembled(disassembled);
+        print_disassembled(disassembled, cpu->pc);
         run(cpu, bus, 50);
     }
 
