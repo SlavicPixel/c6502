@@ -34,13 +34,44 @@ void run(Cpu *cpu, Bus *bus, int instruction_count)
 
 }
 
-void print_disassembled(Line *disassembled)
+Line *find_first_entry(Line *disassembled, uint16_t start_address)
 {
-    Line *entry, *tmp;
-
-    printf("\nDisassembled code: \n");
-    HASH_ITER(hh, disassembled, entry, tmp){
-        printf("%s\n", entry->line);
+    Line *entry = NULL;
+    HASH_FIND(hh, disassembled, &start_address, sizeof(uint16_t), entry);
+    if (!entry)
+    {
+        printf("Start address not found in disassembly.\n");
+        return NULL;
     }
-
+    return entry;
 }
+
+void print_disassembled(Line *disassembled, uint16_t start_address)
+{
+    printf("\nDisassembled code:\n");
+
+    Line *entry = find_first_entry(disassembled, start_address);
+
+    if (!entry)
+        return;
+
+    int brk_count = 0;
+    Line *tmp;
+    for (tmp = entry; tmp != NULL; tmp = tmp->hh.next)
+    {
+        printf("%s\n", tmp->line);
+
+        if (strstr(tmp->line, "BRK  {IMP}"))
+        {
+            brk_count++;
+            if (brk_count == 3)
+                break;
+        }
+        else
+        {
+            brk_count = 0;
+        }
+    }
+}
+
+
