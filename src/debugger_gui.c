@@ -58,7 +58,7 @@ void gui_debugger(Cpu *cpu, Bus *bus, uint16_t start_address, Line *first_entry)
             }
         }
         // Offset below zero page
-        int y_offset = 10 + 16 * 20 + 30;  // 16 rows + padding between regions
+        int y_offset = 10 + 16 * 20 + 40;  // 16 rows + padding between regions
 
         // Draw Page $4000 ($4000–$40FF)
         for (int row = 0; row < 16; row++) {
