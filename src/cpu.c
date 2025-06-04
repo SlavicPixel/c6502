@@ -384,7 +384,7 @@ uint8_t ASL(Cpu *cpu, Bus *bus)
 uint8_t BCC(Cpu *cpu, Bus *bus)
 {
     UNUSED(bus);
-    if (get_flag(cpu, C) == 1)
+    if (get_flag(cpu, C) == 0)
     {
         cpu->cycles++;
         cpu->address_abs = cpu->pc + cpu->address_rel;
@@ -418,7 +418,7 @@ uint8_t BCS(Cpu *cpu, Bus *bus)
 uint8_t BEQ(Cpu *cpu, Bus *bus)
 {
     UNUSED(bus);
-    if (get_flag(cpu, C) == 1)
+    if (get_flag(cpu, Z) == 1)
     {
         cpu->cycles++;
         cpu->address_abs = cpu->pc + cpu->address_rel;
@@ -447,7 +447,7 @@ uint8_t BIT(Cpu *cpu, Bus *bus)
 uint8_t BMI(Cpu *cpu, Bus *bus)
 {
     UNUSED(bus);
-    if (get_flag(cpu, C) == 1)
+    if (get_flag(cpu, N) == 1)
     {
         cpu->cycles++;
         cpu->address_abs = cpu->pc + cpu->address_rel;
@@ -464,7 +464,7 @@ uint8_t BMI(Cpu *cpu, Bus *bus)
 uint8_t BNE(Cpu *cpu, Bus *bus)
 {
     UNUSED(bus);
-    if (get_flag(cpu, C) == 1)
+    if (get_flag(cpu, Z) == 0)
     {
         cpu->cycles++;
         cpu->address_abs = cpu->pc + cpu->address_rel;
@@ -481,7 +481,7 @@ uint8_t BNE(Cpu *cpu, Bus *bus)
 uint8_t BPL(Cpu *cpu, Bus *bus)
 {
     UNUSED(bus);
-    if (get_flag(cpu, C) == 1)
+    if (get_flag(cpu, N) == 0)
     {
         cpu->cycles++;
         cpu->address_abs = cpu->pc + cpu->address_rel;
@@ -518,7 +518,7 @@ uint8_t BRK(Cpu *cpu, Bus *bus)
 uint8_t BVC(Cpu *cpu, Bus *bus)
 {
     UNUSED(bus);
-    if (get_flag(cpu, C) == 1)
+    if (get_flag(cpu, V) == 0)
     {
         cpu->cycles++;
         cpu->address_abs = cpu->pc + cpu->address_rel;
@@ -535,7 +535,7 @@ uint8_t BVC(Cpu *cpu, Bus *bus)
 uint8_t BVS(Cpu *cpu, Bus *bus)
 {
     UNUSED(bus);
-    if (get_flag(cpu, C) == 1)
+    if (get_flag(cpu, V) == 1)
     {
         cpu->cycles++;
         cpu->address_abs = cpu->pc + cpu->address_rel;
