@@ -439,7 +439,7 @@ uint8_t BIT(Cpu *cpu, Bus *bus)
 
     set_flag(cpu, Z, (temp & 0x00FF) == 0x00);
     set_flag(cpu, V, cpu->fetched_data & (1 << 6));
-    set_flag(cpu, V, cpu->fetched_data & (1 << 7));
+    set_flag(cpu, N, cpu->fetched_data & (1 << 7));
 
     return 0;
 }
